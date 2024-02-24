@@ -13,9 +13,23 @@
 #     ('text2.txt'. 'hypotheses.')
 #   ]
 #
-def load_input(input_directory):
-    pass
 
+import glob
+import fileinput
+import os
+
+def load_input(input_directory):
+    sequence = []
+    file_names = glob.glob(input_directory+ '/*')
+    with fileinput.input(file_names,encoding= 'utf-8') as f:
+        for line in f:
+            sequence.append(
+                (fileinput.filename(),line))
+    
+    return sequence
+
+#file_names = load_input('input')
+#print(len(file_names))
 
 #
 # Escriba una función llamada maper que recibe una lista de tuplas de la
@@ -30,7 +44,16 @@ def load_input(input_directory):
 #   ]
 #
 def mapper(sequence):
-    pass
+    mapper_out = []
+    for _,tuple in sequence:
+        out = tuple.split()
+        for word in out:
+            word = word.replace(
+                ',','').replace(
+                    '.','').replace("'","")
+            word = word.lower()
+            mapper_out.append((word,1))
+    return mapper_out
 
 
 #
@@ -45,8 +68,9 @@ def mapper(sequence):
 #   ]
 #
 def shuffle_and_sort(sequence):
-    pass
-
+    #sequence.sort(key = lambda x: x[0])
+    sorted_out = sorted(sequence,key = lambda x: x[0])
+    return sorted_out
 
 #
 # Escriba la función reducer, la cual recibe el resultado de shuffle_and_sort y
@@ -55,17 +79,45 @@ def shuffle_and_sort(sequence):
 # texto.
 #
 def reducer(sequence):
-    pass
+    reduce_out = []
+    diccionario = {}
 
+    # counter = 1
+    # for position in range(len(sequence)-1):
+    #     if sequence[position] ==  sequence[position+1]:
+    #         counter+=1
+    #     else:
+    #         tuple_out = (sequence[position][0],counter)
+    #         reduce_out.append(tuple_out)
+    #         #print(counter)
+    #         continue
+
+    for key,value in sequence:
+        if key not in diccionario.keys():
+            diccionario[key]=0
+        diccionario[key]+=value
+    
+    new_sequence = []
+    for key,value in diccionario.items():
+        tuple=(key,value)
+        new_sequence.append(tuple)
+    return new_sequence
+
+
+#print(reduce_out)
 
 #
 # Escriba la función create_ouptput_directory que recibe un nombre de directorio
 # y lo crea. Si el directorio existe, la función falla.
 #
 def create_ouptput_directory(output_directory):
+    if os.path.exists(output_directory):
+        raise FileExistsError(f"The directory '{output_directory}' already exist")
+    else:
+        os.mkdir(output_directory)
     pass
 
-
+# create_ouptput_directory('output')
 #
 # Escriba la función save_output, la cual almacena en un archivo de texto llamado
 # part-00000 el resultado del reducer. El archivo debe ser guardado en el
@@ -74,8 +126,13 @@ def create_ouptput_directory(output_directory):
 # elemento es la clave y el segundo el valor. Los elementos de la tupla están
 # separados por un tabulador.
 #
-def save_output(output_directory, sequence):
-    pass
+def save_output(output_directory , sequence):
+    #file= os.path.join(output_directory,'part-00000')
+    with open(output_directory + '/part-00000', 'w') as fp:
+        for  key, value in sequence:
+            fp.write(f"{key}\t {value}\n")
+    #pass
+
 
 
 #
@@ -83,18 +140,26 @@ def save_output(output_directory, sequence):
 # entregado como parámetro.
 #
 def create_marker(output_directory):
-    pass
+    with open(output_directory + '/_SUCCESS', 'w') as fp:        
+        fp.write("")
+
 
 
 #
 # Escriba la función job, la cual orquesta las funciones anteriores.
 #
 def job(input_directory, output_directory):
+
+    sequence = load_input(input_directory)
+    sequence = mapper(sequence)
+    sequence = shuffle_and_sort(sequence)
+    sequence = reducer(sequence)
+    create_ouptput_directory(output_directory)
+    save_output(output_directory , sequence)
+    create_marker(output_directory)
+
     pass
 
 
 if __name__ == "__main__":
-    job(
-        "input",
-        "output",
-    )
+    job("input","output2")
